@@ -46,22 +46,9 @@ static int is_numeric(char *param)
 }
 
 //result = return
+//exec - num of arguments
 int ft_exit(char **exec)
 {
-	int result;
 
-	result = 0;
-	if (exec[1] && exec[2])
-	{
-		error("exit", -4, 1);
-		return (1);
-	}
-	if (exec[1] && is_numeric(exec[1]))
-	{
-		result = ft_atoi(exec[1]);
-		if (result < 0 || result > 255)
-			result = 128;
-	}
-	error("exit", 1, result);
 	return (0);
 }
