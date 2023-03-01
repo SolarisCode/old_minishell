@@ -1,0 +1,3 @@
+[submodule "built_ins/built_ins/libft"]
+	path = built_ins/built_ins/libft
+	url = https://github.com/thedatab0y/Libft
