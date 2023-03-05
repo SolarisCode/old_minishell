@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/21 18:42:45 by melkholy          #+#    #+#             */
-/*   Updated: 2023/02/25 19:09:15 by melkholy         ###   ########.fr       */
+/*   Updated: 2023/03/04 23:48:06 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,51 @@ int	ft_set_terminal()
 	return (error);
 }
 
+char	*ft_find_word(char *in_put)
+{
+	char	*word;
+	int		count;
+	char	divid;
+
+	count = 0;
+	divid = ' ';
+	if (in_put[count] == '"')
+	{
+		count ++;
+		divid = '"';
+	}
+	else if (in_put[count] == '\'')
+	{
+		count ++;
+		divid = '\'';
+	}
+	while (in_put[count] && in_put[count] != divid)
+		count ++;
+	if (divid == '\'' || divid == '"')
+		word = ft_substr(in_put, 0, count + 1);
+	else
+		word = ft_substr(in_put, 0, count);
+	return (word);
+}
+
+t_cmds	*ft_parse_cmd(char *in_put)
+{
+	t_cmds	*cmd;
+	int		count;
+
+	cmd = (t_cmds *)ft_calloc(sizeof(t_cmds), 1);
+	cmd->cmd = ft_find_word(in_put);
+	if (!(in_put + ft_strlen(cmd->cmd)))
+		return (cmd);
+	cmd->opt = ft_find_word(in_put + ft_strlen(cmd->cmd));
+	if (!(in_put + ft_strlen(cmd->opt)))
+		return (cmd);
+	cmd->args = ft_find_word(in_put + ft_strlen(cmd->opt));
+	if (!(in_put + ft_strlen(cmd->args)))
+		return (cmd);
+	return (NULL);
+}
+
 void	ft_many_cmd(char *in_put)
 {
 	char	**cmds;
@@ -75,13 +120,15 @@ void	ft_many_cmd(char *in_put)
 
 void	ft_parse_input(char *in_put)
 {
-	int	count;
+	t_cmds	*cmd;
+	int		count;
 
 	count = 0;
 	while ((in_put[count] >= 9 && in_put[count] <= 13) || in_put[count] == 32)
 		count ++;
 	if (ft_strchr(&in_put[count], '|'))
 		ft_many_cmd(&in_put[count]);
+	cmd = ft_parse_cmd(&in_put[count]);
 }
 
 /* Used to display the prompt and read the input from the user */
