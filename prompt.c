@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/21 18:42:45 by melkholy          #+#    #+#             */
-/*   Updated: 2023/03/04 23:48:06 by melkholy         ###   ########.fr       */
+/*   Updated: 2023/03/07 02:36:59 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,11 +25,11 @@
 /* Node to store the commands in a linked list */
 typedef struct	s_cmds
 {
-	char	*cmd;
-	char	*opt;
-	char	*args;
-	int		to_pipe;
-	int		to_file;
+	char			*cmd;
+	char			**args;
+	int				to_pipe;
+	int				to_file;
+	struct s_cmds	*next;
 }				t_cmds;
 
 /* A global variable to store the term attributes and exit status */
@@ -66,6 +66,19 @@ int	ft_set_terminal()
 	return (error);
 }
 
+/* Used to ignore all white spaces and return the first idnex after them */
+int	ft_isnspace_indx(char *in_put)
+{
+	int	count;
+
+	count = 0;
+	while (in_put[count] && ((in_put[count] >= 9 && in_put[count] <= 13)
+				|| in_put[count] == 32))
+		count ++;
+	return (count);
+}
+
+/* Used to find and cut the input into words sperated by spaces or comas */
 char	*ft_find_word(char *in_put)
 {
 	char	*word;
@@ -74,6 +87,8 @@ char	*ft_find_word(char *in_put)
 
 	count = 0;
 	divid = ' ';
+	if (!in_put[count])
+		return (NULL);
 	if (in_put[count] == '"')
 	{
 		count ++;
@@ -93,42 +108,123 @@ char	*ft_find_word(char *in_put)
 	return (word);
 }
 
+/* Used to reallocate memory for the double pointer string */
+char **ft_double_realloc(char **str, int old_size, int new_size)
+{
+	char	**tmp;
+	int		count;
+
+	tmp = (char **)ft_calloc(new_size, sizeof(char *));
+	count = 0;
+	while (count < old_size - 1)
+	{
+		tmp[count] = ft_strdup(str[count]);
+		free(str[count]);
+		count ++;
+	}
+	free(str);
+	return (tmp);
+}
+
+/* Used to parse and create the command with its arguments in a node */
 t_cmds	*ft_parse_cmd(char *in_put)
 {
 	t_cmds	*cmd;
 	int		count;
+	int		len;
 
-	cmd = (t_cmds *)ft_calloc(sizeof(t_cmds), 1);
-	cmd->cmd = ft_find_word(in_put);
-	if (!(in_put + ft_strlen(cmd->cmd)))
+	cmd = (t_cmds *)ft_calloc(1, sizeof(t_cmds));
+	cmd->args = (char **)ft_calloc(2, sizeof(char *));
+	len = 0;
+	len = ft_isnspace_indx(in_put);
+	cmd->cmd = ft_find_word(in_put + len);
+	len += ft_strlen(cmd->cmd);
+	len += ft_isnspace_indx(in_put + len);
+	if (!*(in_put + len))
 		return (cmd);
-	cmd->opt = ft_find_word(in_put + ft_strlen(cmd->cmd));
-	if (!(in_put + ft_strlen(cmd->opt)))
-		return (cmd);
-	cmd->args = ft_find_word(in_put + ft_strlen(cmd->opt));
-	if (!(in_put + ft_strlen(cmd->args)))
-		return (cmd);
-	return (NULL);
+	count = 0;
+	while (*(in_put + len))
+	{
+		cmd->args[count] = ft_find_word(in_put + len);
+		len += ft_strlen(cmd->args[count]);
+		count ++;
+		len += ft_isnspace_indx(in_put + len);
+		cmd->args = ft_double_realloc(cmd->args, count + 1, count + 2);
+	}
+	cmd->args[count] = NULL;
+	cmd->next = NULL;
+	return (cmd);
 }
 
-void	ft_many_cmd(char *in_put)
+/* Used to free any double string */
+void	ft_free_dstr(char **str)
 {
-	char	**cmds;
+	int	count;
 
-	cmds = ft_split(in_put, '|');
+	count = 0;
+	while (str[count])
+	{
+		free(str[count]);
+		count ++;
+	}
+	free(str);
 }
 
+/* Used to split the mutiple commands and create 
+ a linked list for them and their arguments */
+t_cmds	*ft_many_cmd(char *in_put)
+{
+	char	**many_cmd;
+	t_cmds	*cmds;
+	t_cmds	*tmp;
+	int		count;
+
+	many_cmd = ft_split(in_put, '|');
+	count = 0;
+	cmds = ft_parse_cmd(many_cmd[count]);
+	tmp = cmds;
+	count ++;
+	while (many_cmd[count])
+	{
+		tmp->next = ft_parse_cmd(many_cmd[count]);
+		tmp = tmp->next;
+		count ++;
+	}
+	ft_free_dstr(many_cmd);
+	return (cmds);
+}
+
+/* Used to check the input and pass it to the parsing and cutting 
+ functions to get back either a linked list with all the command original
+ just one command in a node */
 void	ft_parse_input(char *in_put)
 {
 	t_cmds	*cmd;
+	t_cmds	*tmp;
 	int		count;
 
 	count = 0;
-	while ((in_put[count] >= 9 && in_put[count] <= 13) || in_put[count] == 32)
-		count ++;
+	count += ft_isnspace_indx(in_put);
+	if (!in_put[count])
+		return ;
 	if (ft_strchr(&in_put[count], '|'))
-		ft_many_cmd(&in_put[count]);
-	cmd = ft_parse_cmd(&in_put[count]);
+		cmd = ft_many_cmd(&in_put[count]);
+	else
+		cmd = ft_parse_cmd(&in_put[count]);
+	/* The rest of the function is for demonstration purposes 
+	  to make sure the lexer is working well*/
+	tmp = cmd;
+	while (tmp)
+	{
+		count = 0;
+		printf("Command: %s\n", tmp->cmd);
+		while (tmp->args && tmp->args[count])
+		{
+			printf("Arg %d: %s\n", count, tmp->args[count]);
+			count ++;
+		}
+		tmp = tmp->next;
+	}
 }
 
 /* Used to display the prompt and read the input from the user */
