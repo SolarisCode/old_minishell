@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/21 18:42:45 by melkholy          #+#    #+#             */
-/*   Updated: 2023/03/07 02:36:59 by melkholy         ###   ########.fr       */
+/*   Updated: 2023/03/07 02:44:59 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@
 #define PROMPT "\033[35mminihell\033[36m$\033[0m "
 
 /* Node to store the commands in a linked list */
-typedef struct	s_cmds
+typedef struct s_cmds
 {
 	char			*cmd;
 	char			**args;
@@ -33,12 +33,12 @@ typedef struct	s_cmds
 }				t_cmds;
 
 /* A global variable to store the term attributes and exit status */
-typedef struct	s_term
+typedef struct s_term
 {
 	struct termios	save_attr;
 }				t_term;
 
-t_term	term_attr;
+t_term	g_term_attr;
 
 /* Used to ignore the Control + C signal
  and istead just displayed a new prompt on a new line */
@@ -53,14 +53,14 @@ void	ft_quit_ignore(int sig)
 
 /* Used to save the original terminal attributes, 
  so I can modify them to disable ^C from appreaing on the screen */
-int	ft_set_terminal()
+int	ft_set_terminal(void)
 {
 	struct termios	attr_new;
-	int	error;
+	int				error;
 
 	error = 0;
-	error = tcgetattr(STDIN_FILENO, &term_attr.save_attr);
-	attr_new = term_attr.save_attr;
+	error = tcgetattr(STDIN_FILENO, &g_term_attr.save_attr);
+	attr_new = g_term_attr.save_attr;
 	attr_new.c_lflag &= ~ECHOCTL;
 	error = tcsetattr(STDIN_FILENO, TCSANOW, &attr_new);
 	return (error);
@@ -73,7 +73,7 @@ int	ft_isnspace_indx(char *in_put)
 
 	count = 0;
 	while (in_put[count] && ((in_put[count] >= 9 && in_put[count] <= 13)
-				|| in_put[count] == 32))
+			|| in_put[count] == 32))
 		count ++;
 	return (count);
 }
@@ -109,7 +109,7 @@ char	*ft_find_word(char *in_put)
 }
 
 /* Used to reallocate memory for the double pointer string */
-char **ft_double_realloc(char **str, int old_size, int new_size)
+char	**ft_double_realloc(char **str, int old_size, int new_size)
 {
 	char	**tmp;
 	int		count;
@@ -228,7 +228,7 @@ void	ft_parse_input(char *in_put)
 }
 
 /* Used to display the prompt and read the input from the user */
-int	ft_read_prompt()
+int	ft_read_prompt(void)
 {
 	char	*str;
 
@@ -237,7 +237,7 @@ int	ft_read_prompt()
 		str = readline(PROMPT);
 		if (!str || !ft_strncmp(str, "exit", 4))
 		{
-			tcsetattr(STDIN_FILENO, TCSANOW, &term_attr.save_attr);
+			tcsetattr(STDIN_FILENO, TCSANOW, &g_term_attr.save_attr);
 			if (!str)
 			{
 				rl_on_new_line();
