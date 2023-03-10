@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/21 18:42:45 by melkholy          #+#    #+#             */
-/*   Updated: 2023/03/09 02:47:44 by melkholy         ###   ########.fr       */
+/*   Updated: 2023/03/10 23:54:33 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,12 @@ typedef struct s_cmds
 {
 	char			*cmd;
 	char			**args;
+	char			*tmp_cmd;
 	char			*from_file;
 	char			*hdocs_end;
 	char			*to_file;
 	int				redirect;
+	int				skip_char;
 	struct s_cmds	*next;
 }				t_cmds;
 
@@ -42,6 +44,7 @@ typedef struct s_cmds
 typedef struct s_term
 {
 	struct termios	save_attr;
+	int				status;
 }				t_term;
 
 t_term	g_term_attr;
@@ -82,6 +85,106 @@ int	ft_isnspace_indx(char *in_put)
 			|| in_put[count] == 32))
 		count ++;
 	return (count);
+}
+
+void	ft_find_cmd(t_cmds *cmd, char *in_put);
+
+void	ft_invalid_input(t_cmds *cmd, char *in_put, int index, char divid)
+{
+	char	*str;
+	int		valid;
+	int		count;
+
+	valid = 0;
+	count = 0;
+	// modify this function to handle non starting qouts
+	// if (in_put[0] != divid)
+	// {
+	// 	while (in_put[index + 1] && in_put[index + 1] != divid)
+	// 		index ++;
+	// 	index ++;
+	// 	count = -1;
+	// }
+	cmd->skip_char += index + 1;
+	if (!cmd->cmd)
+	{
+		while (++count < index)
+			if (in_put[count] != divid)
+				valid ++;
+		if (valid && cmd->tmp_cmd)
+		{
+			str = ft_substr(in_put, 1, index - 1);
+			cmd->tmp_cmd = ft_strjoin_free(cmd->tmp_cmd, str);
+			free(str);
+		}
+		else if (valid)
+			cmd->tmp_cmd = ft_substr(in_put, 1, index - 1);
+	}
+}
+
+void	ft_add_cmd(t_cmds *cmd, char *in_put, int index)
+{
+	char	*str;
+	int		valid;
+	int		count;
+
+	valid = 0;
+	count = -1;
+	cmd->skip_char += index;
+	if (!cmd->cmd)
+	{
+		while (++count < index)
+		{
+			if (in_put[count] != ' ')
+				valid ++;
+		}
+		if (valid)
+		{
+			str = ft_substr(in_put, 0, index);
+			cmd->cmd = ft_strjoin_free(cmd->tmp_cmd, str);
+			free(str);
+		}
+		else
+			cmd->cmd = cmd->tmp_cmd;
+	}
+}
+
+void	ft_find_cmd(t_cmds *cmd, char *in_put)
+{
+	int		count;
+	char	divid;
+
+	// count = 0;
+	count = -1;
+	// divid = ' ';
+	// if (!in_put[count])
+	// 	return ;
+	while (in_put[++count])
+		if (in_put[count] == ' ' || in_put[count] == '"' || in_put[count] == '\'')
+		{
+			divid = in_put[count];
+			break ;
+		}
+	// if (in_put[count] == '"')
+	// {
+	// 	count ++;
+	// 	divid = '"';
+	// }
+	// else if (in_put[count] == '\'')
+	// {
+	// 	count ++;
+	// 	divid = '\'';
+	// }
+	if (count > 1)
+		count = 0;
+	while (in_put[count] && in_put[count] != divid)
+		count ++;
+	if (divid == '\'' || divid == '"')
+		ft_invalid_input(cmd, in_put, count, divid);
+	else if (divid == ' ' || !in_put)
+		ft_add_cmd(cmd, in_put, count);
+	if (!cmd->cmd)
+		ft_find_cmd(cmd, &in_put[count + 1]);
 }
 
 /* Used to find and cut the input into words sperated by spaces or comas */
@@ -143,8 +246,8 @@ t_cmds	*ft_lexer(char *in_put)
 	cmd->args = (char **)ft_calloc(2, sizeof(char *));
 	len = 0;
 	len = ft_isnspace_indx(in_put);
-	cmd->cmd = ft_find_word(in_put + len);
-	len += ft_strlen(cmd->cmd);
+	ft_find_cmd(cmd, in_put);
+	len += cmd->skip_char;
 	len += ft_isnspace_indx(in_put + len);
 	if (!*(in_put + len))
 		return (cmd);
@@ -189,6 +292,10 @@ int	ft_in_redirection(char *in_put)
 		result = INPUT;
 	if (in_put[count + 1] && in_put[count + 1] == '<')
 		result = HEREDOC;
+	if (in_put[count] == '>')
+		result = OUTPUT;
+	if (in_put[count + 1] && in_put[count + 1] == '>')
+		result = APPEND;
 	if (!in_put[count + 1] || !in_put[count + 2])
 		printf("\033]35mminihell\033]0m :\
 				syntax error near unexpected token `newline'");
@@ -202,8 +309,7 @@ int	ft_get_args(t_cmds *cmd, char *in_put)
 
 	len = 0;
 	count = 0;
-	if (cmd->cmd)
-		len = ft_strlen(cmd->cmd);
+	len += cmd->skip_char;
 	len += ft_isnspace_indx(&in_put[len]);
 	if (!in_put[len])
 		return (0);
@@ -219,6 +325,30 @@ int	ft_get_args(t_cmds *cmd, char *in_put)
 	return (0);
 }
 
+int	ft_add_inredirect(char *in_put, t_cmds *cmd, int redirect)
+{
+	int	len;
+
+	len = 0;
+	if (redirect == INPUT)
+	{
+		cmd->from_file = ft_find_word(in_put);
+		len += ft_strlen(cmd->from_file);
+	}
+	else if (redirect == HEREDOC)
+	{
+		cmd->hdocs_end = ft_find_word(in_put);
+		len += ft_strlen(cmd->hdocs_end);
+	}
+	else if (redirect == OUTPUT || redirect == APPEND)
+	{
+		cmd->to_file = ft_find_word(in_put);
+		len += ft_strlen(cmd->to_file);
+	}
+	cmd->redirect |= redirect;
+	return (len);
+}
+
 t_cmds	*ft_redirect_cmd(char *in_put)
 {
 	t_cmds	*cmd;
@@ -232,23 +362,24 @@ t_cmds	*ft_redirect_cmd(char *in_put)
 		return (NULL);
 	cmd = (t_cmds *)ft_calloc(1, sizeof(t_cmds));
 	len += ft_isnspace_indx(&in_put[len]);
-	if (redirect == INPUT)
-	{
-		cmd->to_file = ft_find_word(&in_put[len]);
-		len += ft_strlen(cmd->to_file);
-	}
-	else if (redirect == HEREDOC)
-	{
-		cmd->hdocs_end = ft_find_word(&in_put[len]);
-		len += ft_strlen(cmd->hdocs_end);
-	}
+	len += ft_add_inredirect(&in_put[len], cmd, redirect);
 	len += ft_isnspace_indx(&in_put[len]);
-	cmd->cmd = ft_find_word(&in_put[len]);
+	ft_find_cmd(cmd, &in_put[len]);
 	ft_get_args(cmd, &in_put[len]);
 	cmd->next = NULL;
-	cmd->redirect |= redirect;
 	return (cmd);
 }
+
+t_cmds	*ft_many_redirection(char *one_cmd)
+{
+	int	spaces;
+
+	spaces = ft_isnspace_indx(one_cmd);
+	if (one_cmd[spaces] == '<' || one_cmd[spaces] == '>')
+		return (ft_redirect_cmd(&one_cmd[spaces]));
+	return (NULL);
+}
+
 /* Used to split the mutiple commands and create 
  a linked list for them and their arguments */
 t_cmds	*ft_many_cmd(char *in_put)
@@ -260,17 +391,15 @@ t_cmds	*ft_many_cmd(char *in_put)
 
 	many_cmd = ft_split(in_put, '|');
 	count = 0;
-	if (many_cmd[count][ft_isnspace_indx(many_cmd[count])] == '<')
-		cmds = ft_redirect_cmd(&many_cmd[count][ft_isnspace_indx(many_cmd[count])]);
-	else
+	cmds = ft_many_redirection(many_cmd[count]);
+	if (!cmds)
 		cmds = ft_lexer(many_cmd[count]);
 	tmp = cmds;
 	count ++;
 	while (many_cmd[count])
 	{
-		if (many_cmd[count][ft_isnspace_indx(many_cmd[count])] == '<')
-			tmp->next = ft_redirect_cmd(&many_cmd[count][ft_isnspace_indx(many_cmd[count])]);
-		else
+		tmp->next = ft_many_redirection(many_cmd[count]);
+		if (!tmp->next)
 			tmp->next = ft_lexer(many_cmd[count]);
 		tmp = tmp->next;
 		count ++;
@@ -294,7 +423,7 @@ void	ft_parse_input(char *in_put)
 		return ;
 	if (ft_strchr(&in_put[count], '|'))
 		cmd = ft_many_cmd(&in_put[count]);
-	else if (in_put[count] == '<')
+	else if (in_put[count] == '<' || in_put[count] == '>')
 		cmd = ft_redirect_cmd(&in_put[count]);
 	else
 		cmd = ft_lexer(&in_put[count]);
