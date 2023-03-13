@@ -137,6 +137,7 @@ int	ft_atoi(const char *str)
 // 	}
 // }
 
+//free commands list
 void free_com_list(t_com *com)
 {
     while (com != NULL)
@@ -154,6 +155,7 @@ void free_com_list(t_com *com)
     }
 }
 
+//free envp list
 void free_envp_list(t_envp *envp_list)
 {
     while (envp_list != NULL)
@@ -167,7 +169,6 @@ void free_envp_list(t_envp *envp_list)
 }
 
 
-
 static void	arguments_handler(char **array, t_com *com, t_envp *envp_list)
 {
 	int	i;
@@ -179,14 +180,14 @@ static void	arguments_handler(char **array, t_com *com, t_envp *envp_list)
 	{
 		if (array[0][i] < '0' || array[0][i] > '9')
 		{
-			ft_putendl_fd("Myshell 🐚: exit: numeric argument required", 2);
+			ft_putendl_fd("Myshell: exit: numeric argument required", 2);
 			free_com_list(com);
 			free_envp_list(envp_list);
 			exit(255);
 		}
 	}
 	if (array[1])
-		ft_putendl_fd("exit \nMyshell 🐚: exit: too many arguments", 2);
+		ft_putendl_fd("exit \nMyshell: exit: too many arguments", 2);
 	else
 	{
 		i = ft_atoi(array[0]);
@@ -215,6 +216,7 @@ void	builtin_exit(t_com *com, t_envp *envp_list)
 
 
 //--------TESTING-------//
+#include <stdio.h>
 
 int main(void)
 {
@@ -223,8 +225,9 @@ int main(void)
     t_envp *envp_list = malloc(sizeof(t_envp));
 
     // Initialize command and argument
+	com->arg = malloc(1 * sizeof(char *));
     com->cmd = "exit";
-    com->arg = malloc(2 * sizeof(char *));
+    com->arg = malloc(1 * sizeof(char *));
     com->arg[0] = "1";
     com->arg[1] = NULL;
 
@@ -237,7 +240,7 @@ int main(void)
     builtin_exit(com, envp_list);
 
     // Free allocated memory
-    free(com->arg);
+   	free(com->arg);
     free(com);
     free(envp_list);
 

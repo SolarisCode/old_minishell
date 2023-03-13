@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_export.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: busmanov <busmanov@student.42wolfsburg.    +#+  +:+       +#+        */
+/*   By: busmanov <busmanov@student.42wolfsburg.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/13 10:55:02 by busmanov          #+#    #+#             */
-/*   Updated: 2023/03/13 11:50:34 by busmanov         ###   ########.fr       */
+/*   Updated: 2023/03/13 18:43:36 by busmanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,7 +182,7 @@ static void	print_export_error(char *str)
 {
 	if (str)
 	{
-		ft_putstr_fd("Myshell 🐚: export: `", 2);
+		ft_putstr_fd("Myshell: export: `", 2);
 		ft_putstr_fd(str, 2);
 		ft_putendl_fd("': not a valid identifier", 2);
 	}
@@ -355,7 +355,7 @@ int	builtin_export(t_com *com, t_envp **envp_list)
 }
 
 //-----------testing-------------//
-
+#include <stdio.h>
 int main(void)
 {
     t_com   com;
@@ -366,7 +366,9 @@ int main(void)
     char *args[] = {"VAR1=value1", "VAR2=value2", "VAR3+=value3", "invalid_var", NULL};
     com.arg = args;
 
-    int ret = builtin_export(&com, &envp_list);
+    //int ret = builtin_export(&com, &envp_list);
+	//printf("Return value: %d\n", ret);
+	builtin_export(&com, &envp_list);
 
     // check the return value of builtin_export and the content of envp_list
 
