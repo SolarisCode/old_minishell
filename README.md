@@ -13,3 +13,7 @@ Our shell must implement the following builtins:
 - [ ] cmd
 - [ ] ft_exit (almost ready)
 - [ ] ft_export
+- [x] ft_echo
+- [x] pwd
+- [x] ft_unset
+- [x] ft_env
