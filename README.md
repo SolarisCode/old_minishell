@@ -10,6 +10,6 @@ Our shell must implement the following builtins:
 - exit with no options
 
 
-[ ] cmd
-[ ] ft_exit (almost ready)
-[ ] ft_export
+[] cmd
+[] ft_exit (almost ready)
+[] ft_export
