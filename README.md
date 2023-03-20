@@ -13,8 +13,9 @@ Our shell must implement the following builtins:
 
 - [ ] cmd
 - [ ] ft_exit
-- due today
+- exit due today
 - [ ] ft_export
+- export due today
 - [x] ft_echo
 - [x] pwd
 - [x] ft_unset
