@@ -1,268 +1,134 @@
+//depending on which platform the program is running on, it sets an appropriate exit status using the control->exit_status variable.
+//If the platform is macOS, the exit status is set to 255, but for Linux, the exit status is set to 2.
+//This is necessary because the exit status is used by other programs or scripts that may call this program, so they need to know whether the program executed successfully or not.
+//The code 
+			//  control->exit_status = (IS_APPLE ? 255 : 2);
+				//sets the exit status of the program based on whether it is being executed on an Apple platform or not.
+//The ? operator used here is called a ternary operator, which is like a shorthand for an if...else statement.
+
+
 
 #include <unistd.h>
-#include <stdlib.h>
+#include <stdlib.h> // for exit()
+#include <stdio.h> // for printf
 
+#define IS_APPLE 0 // macro defined for differentiating between Linux and Apple
 
-typedef struct	s_com
+typedef struct s_control // struct to store some info about the shell
 {
-    char        *cmd;       // command name
-    char        **arg;      // command arguments
-    struct s_com *next;     // pointer to next command in list
-}               t_com;
+    int quit; // indicates if the shell should keep running or not
+    pid_t parent_pid; // process id of the main shell process.
+						// used to determine if the command is being executed by the main shell
+    unsigned char exit_status; // stores exit status in form of 8-bit unsigned int
+} t_control;
 
-typedef struct	s_envp
+size_t ft_array_len(char **arr)
 {
-    char        *var;       // environment variable name
-    char        *val;       // environment variable value
-    struct s_envp *next;    // pointer to next variable in list
-}               t_envp;
+    size_t len; // if arr is NULL, return 0
 
-
-
-
-//-----------LIBFT------------//
-
-
-void	ft_putchar_fd(char c, int fd)
-{
-	write(fd, &c, 1);
+    len = 0;
+    if (arr == NULL)
+        return (len);
+    while (arr[len])
+        len++;
+    return (len); // return the length of the array
 }
 
-void	ft_putstr_fd(char *s, int fd)
+// if c is a digit character from 0 to 9 return 1 else 0
+int ft_isdigit(int c)
 {
-	int		x;
-
-	x = 0;
-	if (!s || fd < 0)
-		return ;
-	while (s[x] != '\0')
-	{
-		ft_putchar_fd(s[x], fd);
-		x++;
-	}
+    if (c >= '0' && c <= '9')
+        return (1);
+    return (0);
 }
 
-void	ft_putendl_fd(char *s, int fd)
+int ft_isonly_ft(char *str, int (*f)(int), int start)
 {
-	if (!s || fd < 0)
-		return ;
-	ft_putstr_fd(s, fd);
-	ft_putchar_fd('\n', fd);
-}
+    if (!str || !f)
+        return (0);
 
-int	ft_atoi(const char *str)
-{
-	long int	result;
-	int			x;
-	int			sign;
-	long int	old_num;
-
-	result = 0;
-	sign = 1;
-	x = 0;
-	while (str[x] == 32 || (str[x] >= 9 && str[x] <= 13))
-		x++;
-	if (str[x] == '-')
-		sign *= -1;
-	if (str[x] == '+' || str[x] == '-')
-		x++;
-	while (str[x] >= '0' && str[x] <= '9')
-	{
-		old_num = result;
-		result = result * 10 + str[x] - '0';
-		if ((old_num < 0 && result > 0) || (old_num > 0 && result < 0))
-			return ((sign == 1) * -1);
-		x++;
-	}
-	return (result * sign);
-}
-
-
-//--------------LIBFT------------//
-
-// void	free_array(char **arr)
-// {
-// 	int	i;
-
-// 	i = 0;
-// 	if (arr)
-// 	{
-// 		if (arr[i])
-// 		{
-// 			while (arr[i])
-// 			{
-// 				free(arr[i]);
-// 				i++;
-// 			}
-// 		}
-// 		free(arr);
-// 	}
-// }
-
-// void	free_envp_list(t_envp *envp_list)
-// {
-// 	if (!envp_list)
-// 		return ;
-// 	while (envp_list)
-// 	{
-// 		if (envp_list->var)
-// 			free(envp_list->var);
-// 		if (envp_list->val)
-// 			free(envp_list->val);
-// 		envp_list = envp_list->next;
-// 	}
-// 	free(envp_list);
-// 	envp_list = NULL;
-// }
-
-// void	free_com_list(t_com *com)
-// {
-// 	t_com	*tmp;
-
-// 	if (com)
-// 	{
-// 		while (com)
-// 		{
-// 			tmp = com->next;
-// 			if (com->cmd)
-// 				free(com->cmd);
-// 			if (com->arg)
-// 				free_array(com->arg);
-// 			if (com->arg)
-// 				free(com->arg);
-// 			com = tmp;
-// 		}
-// 		if (com)
-// 			free(com);
-// 	}
-// }
-
-//free commands list
-void free_com_list(t_com *com)
-{
-    while (com != NULL)
+    while (str[start]) // iterate over index after start till reaching '\0'
     {
-        t_com *next = com->next;
-        free(com->cmd);
-        if (com->arg != NULL)
-        {
-            for (int i = 0; com->arg[i] != NULL; i++)
-                free(com->arg[i]);
-            free(com->arg);
-        }
-        free(com);
-        com = next;
+        if (!f((int)str[start])) // if f of str is false, like (!ft_isdigit('e')) then return 0 early
+            return (0);
+        start++;
     }
+
+    return (1); // if all elems were digits and successfully evaluated, return 1
 }
 
-//free envp list
-void free_envp_list(t_envp *envp_list)
+// return integer formed
+int ft_atoi(const char *str)
 {
-    while (envp_list != NULL)
+    int sign = 1;
+    int res = 0;
+    int i = 0;
+
+    while (str[i] == ' ' || str[i] == '\t' || str[i] == '\n'
+           || str[i] == '\v' || str[i] == '\f' || str[i] == '\r')
+        i++;
+    if (str[i] == '+' || str[i] == '-')
     {
-        t_envp *next = envp_list->next;
-        free(envp_list->var);
-        free(envp_list->val);
-        free(envp_list);
-        envp_list = next;
+        if (str[i] == '-')
+            sign = -1;
+        i++;
     }
+    while (str[i] >= '0' && str[i] <= '9')
+    {
+        res = res * 10 + str[i] - '0';
+        i++;
+    }
+    return (sign * res);
 }
 
-
-static void	arguments_handler(char **array, t_com *com, t_envp *envp_list)
+// print error message in specified format
+void ft_perror(char *cmd, char *arg, char *msg)
 {
-	int	i;
-
-	i = 0;
-	if (array[0][i] == '+' || array[0][i] == '-')
-		i++;
-	while (array[0][++i])
-	{
-		if (array[0][i] < '0' || array[0][i] > '9')
-		{
-			ft_putendl_fd("Myshell: exit: numeric argument required", 2);
-			free_com_list(com);
-			free_envp_list(envp_list);
-			exit(255);
-		}
-	}
-	if (array[1])
-		ft_putendl_fd("exit \nMyshell: exit: too many arguments", 2);
-	else
-	{
-		i = ft_atoi(array[0]);
-		ft_putendl_fd("exit", 1);
-		free_com_list(com);
-		free_envp_list(envp_list);
-		exit(i);
-	}
+    printf("ERROR: %s: %s%s\n", cmd, msg, (arg ? arg : ""));
 }
 
-void	builtin_exit(t_com *com, t_envp *envp_list)
+int exit_builtin(char **argv, t_control *control)
 {
-	int	i;
+    int has_sign;
 
-	i = 0;
-	if (!com->arg)
-	{
-		ft_putendl_fd("exit", 1);
-		free_com_list(com);
-		free_envp_list(envp_list);
-		exit(0);
-	}
-	else
-		arguments_handler(com->arg, com, envp_list);
+    control->quit = 1; // switch quit flag on
+    if (control->parent_pid == getpid()) // check if this command is being executed by the main shell
+        printf("exit\n"); // if yes, print "exit" to STDOUT(screen)
+     if (!argv || !argv[1])
+        return (1); // return 1 for successful execution
+					// here, I am asssuming that the first argument is always "exit"
+    has_sign = (argv[1][0] == '-' || argv[1][0] == '+'); // check if first elem of the second argument has sign - or +
+    if (!ft_isonly_ft(argv[1] + has_sign, ft_isdigit, 1)) // check if the second arg contains only digits
+    {
+        ft_perror("exit", argv[1], "numeric argument required"); // if not, print numeric argument required error msg
+		// if IS_APPLE is true, then the below evaluates to 255(else to 2) and assign to control->exit_status
+        control->exit_status = (IS_APPLE ? 255 : 2); //set appropriate exit status based on which platform I am on
+    }
+    else if (ft_array_len(argv) >= 3)
+    {
+        ft_perror("exit", NULL, "too many arguments"); // if there are more than two arguments provided, print too many args error msg
+        control->quit = 0; // unset quit flag
+        control->exit_status = 1; //set the exit status according to the error
+    }
+    else
+        control->exit_status = (unsigned char)ft_atoi(argv[1]); // this sets the exit status for the shell
+		// control variable stores the informatin about the shell and one of its fields
+		// (exit status) gets updated to the integer value of the second arg passed to the "exit" command by calling ft_atoi()
+		//argv[1] refers to the second arg of the args[] array in main() function 
+    printf("exit\n"); // displays the word "exit"
+    exit(0); // immediately terminates the program
 }
 
-
-//--------TESTING-------//
-#include <stdio.h>
 
 int main(void)
 {
-    // Allocate memory for t_com and t_envp
-    t_com *com = malloc(sizeof(t_com));
-    t_envp *envp_list = malloc(sizeof(t_envp));
+    t_control control = {0}; // initializes a t_control struct named control.
+							// {0} syntax sets all of its fields to zero to avoid garbage values
+							// also to make sure all fields start at the same point
+    char *args[] = {"exit", "127", NULL}; // special purpose args[] array which will only be used for executing "exit" command with
+										// an additional parameter 0. 
 
-    // Initialize command and argument
-	com->arg = malloc(1 * sizeof(char *));
-    com->cmd = "exit";
-    com->arg = malloc(1 * sizeof(char *));
-    com->arg[0] = "1";
-    com->arg[1] = NULL;
+    exit_builtin(args, &control); // this invokes exit_builtin() function to execute the "exit" command.
 
-    // Initialize environment variable
-    envp_list->var = "PATH";
-    envp_list->val = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin";
-    envp_list->next = NULL;
-
-    // Call the exit builtin function
-    builtin_exit(com, envp_list);
-
-    // Free allocated memory
-   	free(com->arg);
-    free(com);
-    free(envp_list);
-
-    // Exit the program
-    return 0;
+    return (0);
 }
-
-
-// int main(void)
-// {
-//     t_com *com = malloc(sizeof(t_com));
-//     t_envp *envp_list = malloc(sizeof(t_envp));
-//     com->cmd = "exit";
-//     com->arg = malloc(2 * sizeof(char *));
-//     com->arg[0] = "1";
-//     com->arg[1] = NULL;
-//     envp_list->var = "PATH";
-//     envp_list->val = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin";
-//     envp_list->next = NULL;
-
-//     builtin_exit(com, envp_list);
-
-//     // free memory and exit
-//     return (0);
-// }
