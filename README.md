@@ -12,8 +12,7 @@ Our shell must implement the following builtins:
 # Todo
 
 - [ ] cmd
-- [ ] ft_exit
-- exit due today
+- [x] ft_exit
 - [ ] ft_export
 - export due today
 - [x] ft_echo
