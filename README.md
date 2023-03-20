@@ -8,3 +8,7 @@ Our shell must implement the following builtins:
 ◦ unset with no options
 ◦ env with no options or arguments
 ◦ exit with no options
+
+
+- hye
+* yes
