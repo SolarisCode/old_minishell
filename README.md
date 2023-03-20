@@ -9,6 +9,7 @@ Our shell must implement the following builtins:
 - env with no options or arguments
 - exit with no options
 
+#Todo
 
 - [ ] cmd
 - [ ] ft_exit (almost ready)
