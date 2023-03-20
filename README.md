@@ -10,5 +10,6 @@ Our shell must implement the following builtins:
 - exit with no options
 
 
-- hye
-* yes
+[ ] cmd
+[ ] ft_exit (almost ready)
+[ ] ft_export
