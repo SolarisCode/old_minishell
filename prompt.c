@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/21 18:42:45 by melkholy          #+#    #+#             */
-/*   Updated: 2023/03/23 17:20:56 by melkholy         ###   ########.fr       */
+/*   Updated: 2023/03/24 00:31:06 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -262,7 +262,7 @@ char	*ft_lexer(t_cmds *cmd, char *in_put)
 	count = -1;
 	divid = 0;
 	str = (char *)ft_calloc(1, sizeof(char));
-	while (in_put[++count])
+	while (in_put[++count] && in_put[count] != ' ')
 	{
 		if (in_put[count] == '"' || in_put[count] == '\'')
 		{
@@ -270,8 +270,6 @@ char	*ft_lexer(t_cmds *cmd, char *in_put)
 			while (in_put[++count] && in_put[count] != divid)
 				str = ft_strjoin_free(str, ft_substr(&in_put[count], 0, 1));
 		}
-		else if (in_put[count] == ' ')
-			break ;
 		else
 			str = ft_strjoin_free(str, ft_substr(&in_put[count], 0, 1));
 	}
@@ -360,6 +358,84 @@ char	**ft_double_realloc(char **str, int old_size, int new_size)
 	return (tmp);
 }
 
+int	ft_in_redirection(char *in_put)
+{
+	int	count;
+	int	result;
+
+	count = 0;
+	result = 0;
+	while (in_put[count] && in_put[count] == '<')
+		count ++;
+	result |= count;
+	count = 0;
+	while (in_put[count] && in_put[count] == '>')
+		count ++;
+	result |= count << 2;
+	return (result);
+}
+
+void	ft_add_inredirect(char *in_put, t_cmds *cmd, int redirect)
+{
+	if ((redirect & INPUT) == INPUT)
+		cmd->from_file = ft_lexer(cmd, &in_put[cmd->skip_char]);
+	else if ((redirect & HEREDOC) == HEREDOC)
+		cmd->hdocs_end = ft_lexer(cmd, &in_put[cmd->skip_char]);
+	else if ((redirect & OUTPUT) == OUTPUT || (redirect & APPEND) == APPEND)
+		cmd->to_file = ft_lexer(cmd, &in_put[cmd->skip_char]);
+	cmd->redirect |= redirect;
+}
+
+void	ft_arrange_args(t_cmds *cmd, int index, int len)
+{
+	int	count;
+
+	if (!cmd->args[index][len])
+	{
+		free(cmd->args[index]);
+		cmd->args[index] = cmd->args[index + 1];
+		count = index;
+		while (cmd->args[++count])
+			cmd->args[count] = cmd->args[count + 1];
+		free(cmd->args[index]);
+		cmd->args[index] = cmd->args[index + 1];
+		count = index;
+		while (cmd->args[++count])
+			cmd->args[count] = cmd->args[count + 1];
+		return ;
+	}
+	free(cmd->args[index]);
+	cmd->args[index] = cmd->args[index + 1];
+	while (cmd->args[++index])
+		cmd->args[index] = cmd->args[index + 1];
+}
+
+void	ft_after_redirect(t_cmds *cmd)
+{
+	int		count;
+	int		len;
+	int		redirect;
+
+	count = -1;
+	len = 0;
+	while (cmd->args[++count])
+	{
+		if (ft_in_redirection(cmd->args[count]))
+		{
+			redirect = ft_in_redirection(cmd->args[count]);
+			len ++;
+			if ((redirect & HEREDOC) || (redirect & APPEND))
+				len ++;
+			cmd->skip_char = 0;
+			if (cmd->args[count][len])
+				ft_add_inredirect(&cmd->args[count][len], cmd, redirect);
+			else
+				ft_add_inredirect(cmd->args[count + 1], cmd, redirect);
+			ft_arrange_args(cmd, count, len);
+		}
+	}
+}
+
 int	ft_get_args(t_cmds *cmd, char *in_put)
 {
 	int	count;
@@ -389,6 +465,7 @@ t_cmds	*ft_parser(char *in_put)
 	cmd->cmd = ft_lexer(cmd, &in_put[cmd->skip_char]);
 	// cmd->skip_char += ft_isnspace_indx(&in_put[cmd->skip_char]);
 	ft_get_args(cmd, in_put);
+	ft_after_redirect(cmd);
 	// if (!in_put[cmd->skip_char])
 	// 	return (cmd);
 	// count = 0;
@@ -447,23 +524,6 @@ void	ft_free_dstr(char **str)
 	free(str);
 }
 
-int	ft_in_redirection(char *in_put)
-{
-	int	count;
-	int	result;
-
-	count = 0;
-	result = 0;
-	while (in_put[count] && in_put[count] == '<')
-		count ++;
-	result |= count;
-	count = 0;
-	while (in_put[count] && in_put[count] == '>')
-		count ++;
-	result |= count << 2;
-	return (result);
-}
-
 // int	ft_get_args(t_cmds *cmd, char *in_put)
 // {
 // 	int	count;
@@ -483,17 +543,6 @@ int	ft_in_redirection(char *in_put)
 // 	return (0);
 // }
 
-void	ft_add_inredirect(char *in_put, t_cmds *cmd, int redirect)
-{
-	if ((redirect & INPUT) == INPUT)
-		cmd->from_file = ft_lexer(cmd, &in_put[cmd->skip_char]);
-	else if ((redirect & HEREDOC) == HEREDOC)
-		cmd->hdocs_end = ft_lexer(cmd, &in_put[cmd->skip_char]);
-	else if ((redirect & OUTPUT) == OUTPUT || (redirect & APPEND) == APPEND)
-		cmd->to_file = ft_lexer(cmd, &in_put[cmd->skip_char]);
-	cmd->redirect |= redirect;
-}
-
 t_cmds	*ft_redirect_cmd(char *in_put)
 {
 	t_cmds	*cmd;
@@ -505,9 +554,9 @@ t_cmds	*ft_redirect_cmd(char *in_put)
 	redirect = ft_in_redirection(&in_put[len]);
 	if (!redirect)
 		return (NULL);
-	len += redirect;
-	if (redirect > 1)
-		len += 2 - redirect;
+	len ++;
+	if ((redirect & HEREDOC) || (redirect & APPEND))
+		len ++;
 	if (!in_put[len])
 		return (NULL);
 	cmd = (t_cmds *)ft_calloc(1, sizeof(t_cmds));
@@ -590,11 +639,11 @@ void	ft_parse_input(char *in_put)
 			printf("Arg %d: %s\n", count, tmp->args[count]);
 			count ++;
 		}
-		if ((tmp->redirect & INPUT) == INPUT)
+		if ((tmp->redirect & INPUT))
 			printf("From_file: %s\n", tmp->from_file);
-		else if ((tmp->redirect & HEREDOC) == HEREDOC)
+		else if ((tmp->redirect & HEREDOC))
 			printf("Heredoc_end: %s\n", tmp->hdocs_end);
-		else if ((tmp->redirect & OUTPUT) == OUTPUT || (tmp->redirect & APPEND) == APPEND)
+		else if ((tmp->redirect & OUTPUT) || (tmp->redirect & APPEND))
 			printf("To_file: %s\n", tmp->to_file);
 		tmp = tmp->next;
 	}
