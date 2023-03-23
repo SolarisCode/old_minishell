@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/21 18:42:45 by melkholy          #+#    #+#             */
-/*   Updated: 2023/03/23 16:59:09 by melkholy         ###   ########.fr       */
+/*   Updated: 2023/03/23 17:20:56 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -253,7 +253,7 @@ int	ft_isnspace_indx(char *in_put)
 // 	return (count);
 // }
 
-char	*ft_simple(t_cmds *cmd, char *in_put)
+char	*ft_lexer(t_cmds *cmd, char *in_put)
 {
 	char	*str;
 	char	divid;
@@ -263,11 +263,10 @@ char	*ft_simple(t_cmds *cmd, char *in_put)
 	divid = 0;
 	str = (char *)ft_calloc(1, sizeof(char));
 	while (in_put[++count])
+	{
 		if (in_put[count] == '"' || in_put[count] == '\'')
 		{
 			divid = in_put[count];
-			// if (in_put[count + 1] != divid)
-			// 	str = ft_strjoin_free(str, ft_substr(&in_put[count], 0, 1));
 			while (in_put[++count] && in_put[count] != divid)
 				str = ft_strjoin_free(str, ft_substr(&in_put[count], 0, 1));
 		}
@@ -275,6 +274,7 @@ char	*ft_simple(t_cmds *cmd, char *in_put)
 			break ;
 		else
 			str = ft_strjoin_free(str, ft_substr(&in_put[count], 0, 1));
+	}
 	cmd->skip_char += count;
 	if (in_put[count])
 		cmd->skip_char ++;
@@ -371,7 +371,7 @@ int	ft_get_args(t_cmds *cmd, char *in_put)
 	cmd->args = (char **)ft_calloc(2, sizeof(char *));
 	while (in_put[cmd->skip_char])
 	{
-		cmd->args[count] = ft_simple(cmd, &in_put[cmd->skip_char]);
+		cmd->args[count] = ft_lexer(cmd, &in_put[cmd->skip_char]);
 		count ++;
 		cmd->skip_char += ft_isnspace_indx(&in_put[cmd->skip_char]);
 		cmd->args = ft_double_realloc(cmd->args, count + 1, count + 2);
@@ -379,15 +379,14 @@ int	ft_get_args(t_cmds *cmd, char *in_put)
 	return (0);
 }
 
-t_cmds	*ft_lexer(char *in_put)
+t_cmds	*ft_parser(char *in_put)
 {
 	t_cmds	*cmd;
-	// int		count;
 
 	cmd = (t_cmds *)ft_calloc(1, sizeof(t_cmds));
 	// cmd->args = (char **)ft_calloc(2, sizeof(char *));
 	cmd->skip_char = ft_isnspace_indx(in_put);
-	cmd->cmd = ft_simple(cmd, &in_put[cmd->skip_char]);
+	cmd->cmd = ft_lexer(cmd, &in_put[cmd->skip_char]);
 	// cmd->skip_char += ft_isnspace_indx(&in_put[cmd->skip_char]);
 	ft_get_args(cmd, in_put);
 	// if (!in_put[cmd->skip_char])
@@ -395,7 +394,7 @@ t_cmds	*ft_lexer(char *in_put)
 	// count = 0;
 	// while (in_put[cmd->skip_char])
 	// {
-	// 	cmd->args[count] = ft_simple(cmd, &in_put[cmd->skip_char]);
+	// 	cmd->args[count] = ft_lexer(cmd, &in_put[cmd->skip_char]);
 	// 	cmd->skip_char += ft_isnspace_indx(&in_put[cmd->skip_char]);
 	// 	count ++;
 	// 	cmd->args = ft_double_realloc(cmd->args, count + 1, count + 2);
@@ -405,7 +404,7 @@ t_cmds	*ft_lexer(char *in_put)
 	return (cmd);
 }
 /* Used to parse and create the command with its arguments in a node */
-// t_cmds	*ft_lexer_o(char *in_put)
+// t_cmds	*ft_tester_for_lex(char *in_put)
 // {
 // 	t_cmds	*cmd;
 // 	int		count;
@@ -415,7 +414,7 @@ t_cmds	*ft_lexer(char *in_put)
 // 	cmd->args = (char **)ft_calloc(2, sizeof(char *));
 // 	len = 0;
 // 	len = ft_isnspace_indx(in_put);
-// 	cmd->cmd = ft_simple(cmd, &in_put[len]);
+// 	cmd->cmd = ft_lexer(cmd, &in_put[len]);
 // 	cmd->skip_char += ft_isnspace_indx(&in_put[len + cmd->skip_char]);
 // 	len = cmd->skip_char;
 // 	if (!in_put[len])
@@ -423,7 +422,7 @@ t_cmds	*ft_lexer(char *in_put)
 // 	count = 0;
 // 	while (in_put[len])
 // 	{
-// 		cmd->args[count] = ft_simple(cmd, &in_put[len]);
+// 		cmd->args[count] = ft_lexer(cmd, &in_put[len]);
 // 		cmd->skip_char += ft_isnspace_indx(&in_put[cmd->skip_char]);
 // 		count ++;
 // 		len = cmd->skip_char;
@@ -463,23 +462,6 @@ int	ft_in_redirection(char *in_put)
 		count ++;
 	result |= count << 2;
 	return (result);
-	// if (!in_put[count])
-	// 	return (0);
-	// if (in_put[count] == '<')
-	// 	result = INPUT;
-	// if (in_put[count + 1] && in_put[count + 1] == '<')
-	// 	result = HEREDOC;
-	// if (in_put[count] == '>')
-	// 	result = OUTPUT;
-	// if (in_put[count + 1] && in_put[count + 1] == '>')
-	// 	result = APPEND;
-	// if (!in_put[count + 1] || !in_put[count + 2])
-	// 	printf("\033]35mminihell\033]0m :\
-	// 			syntax error near unexpected token `newline'");
-	// if (result > 1)
-	// 	return (2);
-	// else
-	// 	return (1);
 }
 
 // int	ft_get_args(t_cmds *cmd, char *in_put)
@@ -493,7 +475,7 @@ int	ft_in_redirection(char *in_put)
 // 	cmd->args = (char **)ft_calloc(2, sizeof(char *));
 // 	while (in_put[cmd->skip_char])
 // 	{
-// 		cmd->args[count] = ft_simple(cmd, &in_put[cmd->skip_char]);
+// 		cmd->args[count] = ft_lexer(cmd, &in_put[cmd->skip_char]);
 // 		count ++;
 // 		cmd->skip_char += ft_isnspace_indx(&in_put[cmd->skip_char]);
 // 		cmd->args = ft_double_realloc(cmd->args, count + 1, count + 2);
@@ -504,11 +486,11 @@ int	ft_in_redirection(char *in_put)
 void	ft_add_inredirect(char *in_put, t_cmds *cmd, int redirect)
 {
 	if ((redirect & INPUT) == INPUT)
-		cmd->from_file = ft_simple(cmd, &in_put[cmd->skip_char]);
+		cmd->from_file = ft_lexer(cmd, &in_put[cmd->skip_char]);
 	else if ((redirect & HEREDOC) == HEREDOC)
-		cmd->hdocs_end = ft_simple(cmd, &in_put[cmd->skip_char]);
+		cmd->hdocs_end = ft_lexer(cmd, &in_put[cmd->skip_char]);
 	else if ((redirect & OUTPUT) == OUTPUT || (redirect & APPEND) == APPEND)
-		cmd->to_file = ft_simple(cmd, &in_put[cmd->skip_char]);
+		cmd->to_file = ft_lexer(cmd, &in_put[cmd->skip_char]);
 	cmd->redirect |= redirect;
 }
 
@@ -533,7 +515,7 @@ t_cmds	*ft_redirect_cmd(char *in_put)
 	cmd->skip_char = len;
 	ft_add_inredirect(in_put, cmd, redirect);
 	cmd->skip_char += ft_isnspace_indx(&in_put[len]);
-	cmd->cmd = ft_simple(cmd, &in_put[cmd->skip_char]);
+	cmd->cmd = ft_lexer(cmd, &in_put[cmd->skip_char]);
 	ft_get_args(cmd, in_put);
 	cmd->next = NULL;
 	return (cmd);
@@ -562,14 +544,14 @@ t_cmds	*ft_many_cmd(char *in_put)
 	count = 0;
 	cmds = ft_redirect_cmd(many_cmd[count]);
 	if (!cmds)
-		cmds = ft_lexer(many_cmd[count]);
+		cmds = ft_parser(many_cmd[count]);
 	tmp = cmds;
 	count ++;
 	while (many_cmd[count])
 	{
 		tmp->next = ft_redirect_cmd(many_cmd[count]);
 		if (!tmp->next)
-			tmp->next = ft_lexer(many_cmd[count]);
+			tmp->next = ft_parser(many_cmd[count]);
 		tmp = tmp->next;
 		count ++;
 	}
@@ -595,7 +577,7 @@ void	ft_parse_input(char *in_put)
 	else if (in_put[count] == '<' || in_put[count] == '>')
 		cmd = ft_redirect_cmd(&in_put[count]);
 	else
-		cmd = ft_lexer(&in_put[count]);
+		cmd = ft_parser(&in_put[count]);
 	/* The rest of the function is for demonstration purposes 
 	  to make sure the lexer is working well*/
 	tmp = cmd;
