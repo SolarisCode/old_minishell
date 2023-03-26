@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/21 18:42:45 by melkholy          #+#    #+#             */
-/*   Updated: 2023/03/24 00:31:06 by melkholy         ###   ########.fr       */
+/*   Updated: 2023/03/25 16:50:05 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -418,7 +418,7 @@ void	ft_after_redirect(t_cmds *cmd)
 
 	count = -1;
 	len = 0;
-	while (cmd->args[++count])
+	while (cmd->args && cmd->args[++count])
 	{
 		if (ft_in_redirection(cmd->args[count]))
 		{
