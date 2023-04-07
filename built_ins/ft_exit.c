@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_exit.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: busmanov <busmanov@student.42wolfsburg.    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/04/07 18:42:48 by busmanov          #+#    #+#             */
+/*   Updated: 2023/04/07 18:42:50 by busmanov         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 //depending on which platform the program is running on, it sets an appropriate exit status using the control->exit_status variable.
 //If the platform is macOS, the exit status is set to 255, but for Linux, the exit status is set to 2.
 //This is necessary because the exit status is used by other programs or scripts that may call this program, so they need to know whether the program executed successfully or not.
@@ -120,15 +132,15 @@ int exit_builtin(char **argv, t_control *control)
 }
 
 
-int main(void)
-{
-    t_control control = {0}; // initializes a t_control struct named control.
-							// {0} syntax sets all of its fields to zero to avoid garbage values
-							// also to make sure all fields start at the same point
-    char *args[] = {"exit", "127", NULL}; // special purpose args[] array which will only be used for executing "exit" command with
-										// an additional parameter 0. 
+// int main(void)
+// {
+//     t_control control = {0}; // initializes a t_control struct named control.
+// 							// {0} syntax sets all of its fields to zero to avoid garbage values
+// 							// also to make sure all fields start at the same point
+//     char *args[] = {"exit", "127", NULL}; // special purpose args[] array which will only be used for executing "exit" command with
+// 										// an additional parameter 0. 
 
-    exit_builtin(args, &control); // this invokes exit_builtin() function to execute the "exit" command.
+//     exit_builtin(args, &control); // this invokes exit_builtin() function to execute the "exit" command.
 
-    return (0);
-}
+//     return (0);
+// }

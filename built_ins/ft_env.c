@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_env.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: busmanov <busmanov@student.42wolfsburg.    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/04/07 18:42:34 by busmanov          #+#    #+#             */
+/*   Updated: 2023/04/07 18:42:37 by busmanov         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -62,7 +74,7 @@ int	builtin_env(t_envp *envp_list)
 		return (1);
 	if (var_position_in_envp(envp_list, "PATH") == -1)
 	{
-		ft_putendl_fd("Myshell 🐚: env: No such file or directory", 2);
+		ft_putendl_fd("Myshell: env: No such file or directory", 2);
 		return (127);
 	}
 	while (envp_list)

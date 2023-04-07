@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_unset.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: busmanov <busmanov@student.42wolfsburg.    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/04/07 18:43:00 by busmanov          #+#    #+#             */
+/*   Updated: 2023/04/07 18:43:02 by busmanov         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -161,7 +173,7 @@ int ft_strncmp(const char *str1, const char *str2)
 }
 
 //compare environment variables with the command-line arguments
-int	env_cmp(char *arg, char *env, char *shell_name)
+int	ft_unset(char *arg, char *env, char *shell_name)
 {
 	int		i;
 	int		diff;
@@ -183,7 +195,7 @@ int	env_cmp(char *arg, char *env, char *shell_name)
 //     char *arg = "HOME";
 //     char *env = "HOME=/home/user";
 //     char *shell_name = "my_shell";
-//     int result = env_cmp(arg, env, shell_name);
+//     int result = ft_unset(arg, env, shell_name);
 //     printf("Comparison result: %d\n", result);
 //     return 0;
 // }
