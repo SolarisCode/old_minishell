@@ -6,7 +6,7 @@
 /*   By: busmanov <busmanov@student.42wolfsburg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/07 18:43:08 by busmanov          #+#    #+#             */
-/*   Updated: 2023/04/07 18:43:10 by busmanov         ###   ########.fr       */
+/*   Updated: 2023/04/10 12:03:45 by busmanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,7 @@ int	ft_strequ(const char *s1, const char *s2)
 	return (0);
 }
 
-int ft_strlen(char *string)
+int ft_strlen(const char *string)
 {
 	int x;
 

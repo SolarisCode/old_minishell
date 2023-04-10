@@ -6,25 +6,25 @@
 /*   By: busmanov <busmanov@student.42wolfsburg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/07 18:43:13 by busmanov          #+#    #+#             */
-/*   Updated: 2023/04/07 18:43:14 by busmanov         ###   ########.fr       */
+/*   Updated: 2023/04/10 12:04:43 by busmanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "builtins.h"
 
-int	ft_strncmp(const char *st1, const char *st2, size_t x)
-{
-	size_t	n;
+// int	ft_strncmp(const char *st1, const char *st2, size_t x)
+// {
+// 	size_t	n;
 
-	n = 0;
-	if (x == 0)
-		return (0);
-	while (n < x - 1 && st1[n] != '\0' && st2[n] != '\0' && st1[n] == st2[n])
-	{
-		n++;
-	}
-	return ((unsigned char)st1[n] - (unsigned char)st2[n]);
-}
+// 	n = 0;
+// 	if (x == 0)
+// 		return (0);
+// 	while (n < x - 1 && st1[n] != '\0' && st2[n] != '\0' && st1[n] == st2[n])
+// 	{
+// 		n++;
+// 	}
+// 	return ((unsigned char)st1[n] - (unsigned char)st2[n]);
+// }
 
 char	*ft_substr(char const *s, unsigned int start, size_t len)
 {
