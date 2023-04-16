@@ -6,7 +6,7 @@
 /*   By: melkholy <melkholy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/21 18:42:45 by melkholy          #+#    #+#             */
-/*   Updated: 2023/03/25 16:50:05 by melkholy         ###   ########.fr       */
+/*   Updated: 2023/04/16 18:54:49 by melkholy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -386,22 +386,42 @@ void	ft_add_inredirect(char *in_put, t_cmds *cmd, int redirect)
 	cmd->redirect |= redirect;
 }
 
+// void	ft_arrange_args(t_cmds *cmd, int index, int len)
+// {
+// 	int	count;
+//
+// 	if (!cmd->args[index][len])
+// 	{
+// 		free(cmd->args[index]);
+// 		cmd->args[index] = cmd->args[index + 1];
+// 		count = index;
+// 		while (cmd->args[++count])
+// 			cmd->args[count] = cmd->args[count + 1];
+// 		free(cmd->args[index]);
+// 		cmd->args[index] = cmd->args[index + 1];
+// 		count = index;
+// 		while (cmd->args[++count])
+// 			cmd->args[count] = cmd->args[count + 1];
+// 		return ;
+// 	}
+// 	free(cmd->args[index]);
+// 	cmd->args[index] = cmd->args[index + 1];
+// 	while (cmd->args[++index])
+// 		cmd->args[index] = cmd->args[index + 1];
+// }
+
 void	ft_arrange_args(t_cmds *cmd, int index, int len)
 {
-	int	count;
-
 	if (!cmd->args[index][len])
 	{
 		free(cmd->args[index]);
-		cmd->args[index] = cmd->args[index + 1];
-		count = index;
-		while (cmd->args[++count])
-			cmd->args[count] = cmd->args[count + 1];
-		free(cmd->args[index]);
-		cmd->args[index] = cmd->args[index + 1];
-		count = index;
-		while (cmd->args[++count])
-			cmd->args[count] = cmd->args[count + 1];
+		free(cmd->args[index + 1]);
+		while (cmd->args[index + 2])
+		{
+			cmd->args[index] = cmd->args[index + 2];
+			index ++;
+		}
+		cmd->args[index] = NULL;
 		return ;
 	}
 	free(cmd->args[index]);
@@ -417,9 +437,9 @@ void	ft_after_redirect(t_cmds *cmd)
 	int		redirect;
 
 	count = -1;
-	len = 0;
 	while (cmd->args && cmd->args[++count])
 	{
+		len = 0;
 		if (ft_in_redirection(cmd->args[count]))
 		{
 			redirect = ft_in_redirection(cmd->args[count]);
@@ -432,6 +452,7 @@ void	ft_after_redirect(t_cmds *cmd)
 			else
 				ft_add_inredirect(cmd->args[count + 1], cmd, redirect);
 			ft_arrange_args(cmd, count, len);
+			count --;
 		}
 	}
 }
@@ -641,9 +662,9 @@ void	ft_parse_input(char *in_put)
 		}
 		if ((tmp->redirect & INPUT))
 			printf("From_file: %s\n", tmp->from_file);
-		else if ((tmp->redirect & HEREDOC))
+		if ((tmp->redirect & HEREDOC))
 			printf("Heredoc_end: %s\n", tmp->hdocs_end);
-		else if ((tmp->redirect & OUTPUT) || (tmp->redirect & APPEND))
+		if ((tmp->redirect & OUTPUT) || (tmp->redirect & APPEND))
 			printf("To_file: %s\n", tmp->to_file);
 		tmp = tmp->next;
 	}
